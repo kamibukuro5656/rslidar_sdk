@@ -219,14 +219,14 @@ sensor_msgs::Imu toRosMsg(const std::shared_ptr<ImuData>& data, const std::strin
   imu_msg.header.stamp = imu_msg.header.stamp.fromSec(data->timestamp);
   imu_msg.header.frame_id = frame_id;
   // Set IMU data
-  imu_msg.angular_velocity.x = data->angular_velocity_x;
-  imu_msg.angular_velocity.y = data->angular_velocity_y;
-  imu_msg.angular_velocity.z = data->angular_velocity_z;
+  imu_msg.angular_velocity.x = -data->angular_velocity_y;
+  imu_msg.angular_velocity.y = -data->angular_velocity_x;
+  imu_msg.angular_velocity.z = -data->angular_velocity_z;
 
   const double G = 9.80665;
-  imu_msg.linear_acceleration.x = data->linear_acceleration_x * G;
-  imu_msg.linear_acceleration.y = data->linear_acceleration_y * G;
-  imu_msg.linear_acceleration.z = data->linear_acceleration_z * G;
+  imu_msg.linear_acceleration.x = -data->linear_acceleration_y * G;
+  imu_msg.linear_acceleration.y = -data->linear_acceleration_x * G;
+  imu_msg.linear_acceleration.z = -data->linear_acceleration_z * G;
   return imu_msg;
 }
 #endif
@@ -479,14 +479,14 @@ sensor_msgs::msg::Imu toRosMsg(const std::shared_ptr<ImuData>& data, const std::
   imu_msg.header.stamp = rclcpp::Time(static_cast<uint64_t>(data->timestamp * 1e9));
   imu_msg.header.frame_id = frame_id;
   // Set IMU data
-  imu_msg.angular_velocity.x = data->angular_velocity_x;
-  imu_msg.angular_velocity.y = data->angular_velocity_y;
-  imu_msg.angular_velocity.z = data->angular_velocity_z;
+  imu_msg.angular_velocity.x = -data->angular_velocity_y;
+  imu_msg.angular_velocity.y = -data->angular_velocity_x;
+  imu_msg.angular_velocity.z = -data->angular_velocity_z;
 
   const double G = 9.80665;
-  imu_msg.linear_acceleration.x = data->linear_acceleration_x * G;
-  imu_msg.linear_acceleration.y = data->linear_acceleration_y * G;
-  imu_msg.linear_acceleration.z = data->linear_acceleration_z * G;
+  imu_msg.linear_acceleration.x = -data->linear_acceleration_y * G;
+  imu_msg.linear_acceleration.y = -data->linear_acceleration_x * G;
+  imu_msg.linear_acceleration.z = -data->linear_acceleration_z * G;
   return imu_msg;
 }
 #endif
