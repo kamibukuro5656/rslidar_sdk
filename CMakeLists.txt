@@ -5,7 +5,8 @@ project(rslidar_sdk)
 #=======================================
 # Custom Point Type (XYZI,XYZIRT, XYZIF, XYZIRTF)
 #=======================================
-set(POINT_TYPE XYZI)
+set(POINT_TYPE XYZIRT)
+set(TIMESTAMP_TYPE OUSTER)
 
 option(ENABLE_TRANSFORM "Enable transform functions" OFF)
 if(${ENABLE_TRANSFORM})
@@ -45,7 +46,7 @@ if(${ENABLE_SOURCE_PACKET_LEGACY})
   add_definitions("-DENABLE_SOURCE_PACKET_LEGACY")
 endif(${ENABLE_SOURCE_PACKET_LEGACY})
 
-option(ENABLE_IMU_DATA_PARSE           "Enable imu data parse" OFF)
+option(ENABLE_IMU_DATA_PARSE           "Enable imu data parse" ON)
 if(${ENABLE_IMU_DATA_PARSE})
 
   message(=============================================================)
@@ -82,6 +83,12 @@ elseif(${POINT_TYPE} STREQUAL "XYZIF")
   add_definitions(-DPOINT_TYPE_XYZIF)
 elseif(${POINT_TYPE} STREQUAL "XYZIRTF")
   add_definitions(-DPOINT_TYPE_XYZIRTF)
+endif()
+
+if(${TIMESTAMP_TYPE} STREQUAL "OUSTER")
+  add_definitions(-DTIMESTAMP_TYPE_OUSTER)
+elseif(${TIMESTAMP_TYPE} STREQUAL "VELODYNE")
+  add_definitions(-DTIMESTAMP_TYPE_VELODYNE)
 endif()
 
 message(=============================================================)

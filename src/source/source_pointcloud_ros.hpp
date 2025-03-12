@@ -78,7 +78,14 @@ inline sensor_msgs::PointCloud2 toRosMsg(const LidarPointCloudMsg& rs_msg, const
   offset = addPointField(ros_msg, "intensity", 1, sensor_msgs::PointField::FLOAT32, offset);
 #if defined(POINT_TYPE_XYZIRT) || defined(POINT_TYPE_XYZIRTF)
   offset = addPointField(ros_msg, "ring", 1, sensor_msgs::PointField::UINT16, offset);
-  offset = addPointField(ros_msg, "timestamp", 1, sensor_msgs::PointField::FLOAT64, offset);
+
+  #if defined(TIMESTAMP_TYPE_OUSTER)
+    offset = addPointField(ros_msg, "t", 1, sensor_msgs::PointField::UINT32, offset);
+  #elif defined(TIMESTAMP_TYPE_VELODYNE)
+    offset = addPointField(ros_msg, "time", 1, sensor_msgs::PointField::FLOAT32, offset);
+  #else
+    offset = addPointField(ros_msg, "timestamp", 1, sensor_msgs::PointField::FLOAT64, offset);
+  #endif
 #endif
 
 #if defined(POINT_TYPE_XYZIF) || defined(POINT_TYPE_XYZIRTF) 
@@ -101,12 +108,24 @@ inline sensor_msgs::PointCloud2 toRosMsg(const LidarPointCloudMsg& rs_msg, const
 
 #if defined(POINT_TYPE_XYZIRT) || defined(POINT_TYPE_XYZIRTF)
   sensor_msgs::PointCloud2Iterator<uint16_t> iter_ring_(ros_msg, "ring");
-  sensor_msgs::PointCloud2Iterator<double> iter_timestamp_(ros_msg, "timestamp");
+
+  #if defined(TIMESTAMP_TYPE_OUSTER)
+    sensor_msgs::PointCloud2Iterator<uint32_t> iter_timestamp_(ros_msg, "t");
+  #elif defined(TIMESTAMP_TYPE_VELODYNE)
+    sensor_msgs::PointCloud2Iterator<float> iter_timestamp_(ros_msg, "time");
+  #else
+    sensor_msgs::PointCloud2Iterator<double> iter_timestamp_(ros_msg, "timestamp");
+  #endif
+
 #endif
 
 #if defined(POINT_TYPE_XYZIF) || defined(POINT_TYPE_XYZIRTF) 
   sensor_msgs::PointCloud2Iterator<uint8_t> iter_feature_(ros_msg, "feature");
 #endif
+
+  #if defined(POINT_TYPE_XYZIRT) || defined(POINT_TYPE_XYZIRTF)
+    const auto &first_point = rs_msg.points[0];
+  #endif
 
   if (send_by_rows)
   {
@@ -128,7 +147,14 @@ inline sensor_msgs::PointCloud2 toRosMsg(const LidarPointCloudMsg& rs_msg, const
 
 #if defined(POINT_TYPE_XYZIRT) || defined(POINT_TYPE_XYZIRTF)
         *iter_ring_ = point.ring;
-        *iter_timestamp_ = point.timestamp;
+
+        #if defined(TIMESTAMP_TYPE_OUSTER)
+          *iter_timestamp_ = (point.timestamp - first_point.timestamp) * 1e9;
+        #elif defined(TIMESTAMP_TYPE_VELODYNE)
+          *iter_timestamp_ = point.timestamp - first_point.timestamp;
+        #else
+          *iter_timestamp_ = point.timestamp;
+        #endif
 
         ++iter_ring_;
         ++iter_timestamp_;
@@ -160,7 +186,13 @@ inline sensor_msgs::PointCloud2 toRosMsg(const LidarPointCloudMsg& rs_msg, const
 
 #if defined(POINT_TYPE_XYZIRT) || defined(POINT_TYPE_XYZIRTF)
       *iter_ring_ = point.ring;
-      *iter_timestamp_ = point.timestamp;
+      #if defined(TIMESTAMP_TYPE_OUSTER)
+        *iter_timestamp_ = (point.timestamp - first_point.timestamp) * 1e9;
+      #elif defined(TIMESTAMP_TYPE_VELODYNE)
+        *iter_timestamp_ = point.timestamp - first_point.timestamp;
+      #else
+        *iter_timestamp_ = point.timestamp;
+      #endif
 
       ++iter_ring_;
       ++iter_timestamp_;
@@ -191,9 +223,10 @@ sensor_msgs::Imu toRosMsg(const std::shared_ptr<ImuData>& data, const std::strin
   imu_msg.angular_velocity.y = data->angular_velocity_y;
   imu_msg.angular_velocity.z = data->angular_velocity_z;
 
-  imu_msg.linear_acceleration.x = data->linear_acceleration_x;
-  imu_msg.linear_acceleration.y = data->linear_acceleration_y;
-  imu_msg.linear_acceleration.z = data->linear_acceleration_z;
+  const double G = 9.80665;
+  imu_msg.linear_acceleration.x = data->linear_acceleration_x * G;
+  imu_msg.linear_acceleration.y = data->linear_acceleration_y * G;
+  imu_msg.linear_acceleration.z = data->linear_acceleration_z * G;
   return imu_msg;
 }
 #endif
@@ -308,7 +341,14 @@ inline sensor_msgs::msg::PointCloud2 toRosMsg(const LidarPointCloudMsg& rs_msg, 
 
 #if defined(POINT_TYPE_XYZIRT) || defined(POINT_TYPE_XYZIRTF)
   offset = addPointField(ros_msg, "ring", 1, sensor_msgs::msg::PointField::UINT16, offset);
-  offset = addPointField(ros_msg, "timestamp", 1, sensor_msgs::msg::PointField::FLOAT64, offset);
+
+  #if defined(TIMESTAMP_TYPE_OUSTER)
+    offset = addPointField(ros_msg, "t", 1, sensor_msgs::PointField::UINT32, offset);
+  #elif defined(TIMESTAMP_TYPE_VELODYNE)
+    offset = addPointField(ros_msg, "time", 1, sensor_msgs::PointField::FLOAT32, offset);
+  #else
+    offset = addPointField(ros_msg, "timestamp", 1, sensor_msgs::PointField::FLOAT64, offset);
+  #endif
 #endif
 
 #if defined(POINT_TYPE_XYZIF) || defined(POINT_TYPE_XYZIRTF) 
@@ -330,12 +370,22 @@ inline sensor_msgs::msg::PointCloud2 toRosMsg(const LidarPointCloudMsg& rs_msg, 
   sensor_msgs::PointCloud2Iterator<float> iter_intensity_(ros_msg, "intensity");
 #if defined(POINT_TYPE_XYZIRT) || defined(POINT_TYPE_XYZIRTF)
   sensor_msgs::PointCloud2Iterator<uint16_t> iter_ring_(ros_msg, "ring");
-  sensor_msgs::PointCloud2Iterator<double> iter_timestamp_(ros_msg, "timestamp");
+  #if defined(TIMESTAMP_TYPE_OUSTER)
+    sensor_msgs::PointCloud2Iterator<uint32_t> iter_timestamp_(ros_msg, "t");
+  #elif defined(TIMESTAMP_TYPE_VELODYNE)
+    sensor_msgs::PointCloud2Iterator<float> iter_timestamp_(ros_msg, "time");
+  #else
+    sensor_msgs::PointCloud2Iterator<double> iter_timestamp_(ros_msg, "timestamp");
+  #endif
 #endif
 
 #if defined(POINT_TYPE_XYZIF) || defined(POINT_TYPE_XYZIRTF) 
   sensor_msgs::PointCloud2Iterator<uint8_t> iter_feature_(ros_msg, "feature");
 #endif
+  
+  #if defined(POINT_TYPE_XYZIRT) || defined(POINT_TYPE_XYZIRTF)
+    const auto &first_point = rs_msg.points[0];
+  #endif
 
   if (send_by_rows)
   {
@@ -356,11 +406,18 @@ inline sensor_msgs::msg::PointCloud2 toRosMsg(const LidarPointCloudMsg& rs_msg, 
         ++iter_intensity_;
 
 #if defined(POINT_TYPE_XYZIRT) || defined(POINT_TYPE_XYZIRTF)
-      *iter_ring_ = point.ring;
-      *iter_timestamp_ = point.timestamp;
+        *iter_ring_ = point.ring;
+        #if defined(TIMESTAMP_TYPE_OUSTER)
+          *iter_timestamp_ = (point.timestamp - first_point.timestamp) * 1e9;
+        #elif defined(TIMESTAMP_TYPE_VELODYNE)
+          *iter_timestamp_ = point.timestamp - first_point.timestamp;
+        #else
+          *iter_timestamp_ = point.timestamp;
+        #endif
 
-      ++iter_ring_;
-      ++iter_timestamp_;
+
+        ++iter_ring_;
+        ++iter_timestamp_;
 #endif
 
 #if defined(POINT_TYPE_XYZIF) || defined(POINT_TYPE_XYZIRTF) 
@@ -389,7 +446,13 @@ inline sensor_msgs::msg::PointCloud2 toRosMsg(const LidarPointCloudMsg& rs_msg, 
 
 #if defined(POINT_TYPE_XYZIRT) || defined(POINT_TYPE_XYZIRTF)
       *iter_ring_ = point.ring;
-      *iter_timestamp_ = point.timestamp;
+      #if defined(TIMESTAMP_TYPE_OUSTER)
+        *iter_timestamp_ = (point.timestamp - first_point.timestamp) * 1e9;
+      #elif defined(TIMESTAMP_TYPE_VELODYNE)
+        *iter_timestamp_ = point.timestamp - first_point.timestamp;
+      #else
+        *iter_timestamp_ = point.timestamp;
+      #endif
 
       ++iter_ring_;
       ++iter_timestamp_;
@@ -420,9 +483,10 @@ sensor_msgs::msg::Imu toRosMsg(const std::shared_ptr<ImuData>& data, const std::
   imu_msg.angular_velocity.y = data->angular_velocity_y;
   imu_msg.angular_velocity.z = data->angular_velocity_z;
 
-  imu_msg.linear_acceleration.x = data->linear_acceleration_x;
-  imu_msg.linear_acceleration.y = data->linear_acceleration_y;
-  imu_msg.linear_acceleration.z = data->linear_acceleration_z;
+  const double G = 9.80665;
+  imu_msg.linear_acceleration.x = data->linear_acceleration_x * G;
+  imu_msg.linear_acceleration.y = data->linear_acceleration_y * G;
+  imu_msg.linear_acceleration.z = data->linear_acceleration_z * G;
   return imu_msg;
 }
 #endif
